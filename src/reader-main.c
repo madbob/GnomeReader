@@ -17,28 +17,18 @@
  * License along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common.h"
 #include "reader-application.h"
-
-#include <gtk/gtk.h>
-
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif
 
 int
 main (int argc, char *argv[])
 {
 	gint retval;
 	ReaderApplication *application;
-	
-	/*
-		TODO
-	*/
 
-	/* Initialize gettext support */
-	// bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
-	// bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-	// textdomain (GETTEXT_PACKAGE);
+	bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+	textdomain (GETTEXT_PACKAGE);
 
 	g_set_prgname ("reader");
 	g_log_set_always_fatal (G_LOG_LEVEL_CRITICAL);

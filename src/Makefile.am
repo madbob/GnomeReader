@@ -1,13 +1,14 @@
 BUILT_SOURCES =
 
-AM_CFLAGS =					\
-	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\"	\
-	-DPACKAGE_SRC_DIR=\""$(srcdir)"\"	\
-	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\"	\
-	$(MAINTAINER_COMPILER_FLAGS)		\
-	-Wall					\
-	-g -O2					\
-	-I../libgd				\
+AM_CFLAGS =						\
+	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\"		\
+	-DGETTEXT_PACKAGE=\""$(GETTEXT_PACKAGE)"\"	\
+	-DPACKAGE_SRC_DIR=\""$(srcdir)"\"		\
+	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\"		\
+	$(MAINTAINER_COMPILER_FLAGS)			\
+	-Wall						\
+	-g -O2						\
+	-I../libgd					\
 	$(READER_CFLAGS)
 
 gresource_file = ../data/reader.gresource.xml

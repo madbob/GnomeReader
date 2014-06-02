@@ -25,6 +25,7 @@
 #endif
 
 #include <gtk/gtk.h>
+#include <glib/gi18n.h>
 #include <libgd/gd.h>
 
 #define TITLE_FONT_WEIGHT		800

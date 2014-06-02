@@ -5,7 +5,6 @@ AC_INIT([gnome-reader],[0.0.1],[],[gnome-reader])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([src/reader-application.c])
 AC_CONFIG_MACRO_DIR([m4])
-# AC_CONFIG_AUX_DIR([config])
 
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 

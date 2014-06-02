@@ -17,8 +17,7 @@
  * License along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gtk/gtk.h>
-
+#include "common.h"
 #include "reader-application.h"
 #include "reader-appwin.h"
 

@@ -1,0 +1,5 @@
+[type: gettext/glade]data/ui/add.ui
+[type: gettext/glade]data/ui/app-menu.ui
+[type: gettext/glade]data/ui/items.ui
+[type: gettext/glade]data/ui/topbar.ui
+[type: gettext/glade]data/ui/window.ui

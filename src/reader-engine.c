@@ -559,7 +559,9 @@ static void
 reader_engine_finalize (GObject *object)
 {
 	GtkTreeIter iter;
+	GtkTreeIter subiter;
 	GtkListStore *items;
+	GDateTime *gdate;
 	ReaderEngine *engine;
 	ReaderEnginePrivate *priv;
 
@@ -572,12 +574,14 @@ reader_engine_finalize (GObject *object)
 	do {
 		gtk_tree_model_get (GTK_TREE_MODEL (priv->data), &iter, EXTRA_COLUMN_FEEDS_MODEL, &items, -1);
 
-		/*
-			TODO: free references to GDateTimes in ITEM_COLUMN_TIME
-		*/
+		if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &subiter) != FALSE) {
+			do {
+				gtk_tree_model_get (GTK_TREE_MODEL (items), &subiter, ITEM_COLUMN_TIME, &gdate, -1);
+				g_date_time_unref (gdate);
+			} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &subiter));
+		}
 
 		g_object_unref (items);
-
 	} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->data), &iter));
 
 	g_object_unref (priv->data);
