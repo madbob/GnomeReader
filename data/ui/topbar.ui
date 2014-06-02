@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <!-- interface-requires gtk+ 3.8 -->
+  <template class="ReaderTopbar" parent="GtkBox">
+    <property name="visible">True</property>
+
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="orientation">horizontal</property>
+        <property name="spacing">0</property>
+
+        <child>
+          <object class="GtkHeaderBar" id="front_toolbar">
+            <property name="visible">True</property>
+            <property name="show-close-button">True</property>
+            <style>
+              <class name="titlebar"/>
+              <class name="menubar"/>
+            </style>
+
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">New</property>
+                <signal name="clicked" handler="on_new_btn_clicked"/>
+              </object>
+            </child>
+          </object>
+
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="padding">0</property>
+          </packing>
+        </child>
+      </object>
+
+      <packing>
+        <property name="name">front</property>
+      </packing>
+    </child>
+
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="orientation">horizontal</property>
+        <property name="spacing">0</property>
+
+        <child>
+          <object class="GtkHeaderBar" id="add_toolbar">
+            <property name="visible">True</property>
+            <property name="show-close-button">True</property>
+            <style>
+              <class name="titlebar"/>
+              <class name="menubar"/>
+            </style>
+
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Back</property>
+                <signal name="clicked" handler="on_back_btn_clicked"/>
+              </object>
+            </child>
+          </object>
+
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="padding">0</property>
+          </packing>
+        </child>
+      </object>
+
+      <packing>
+        <property name="name">addnew</property>
+      </packing>
+    </child>
+
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="orientation">horizontal</property>
+        <property name="spacing">0</property>
+
+        <child>
+          <object class="GtkHeaderBar" id="items_toolbar">
+            <property name="visible">True</property>
+            <property name="show-close-button">True</property>
+            <style>
+              <class name="titlebar"/>
+              <class name="menubar"/>
+            </style>
+
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Channels</property>
+                <signal name="clicked" handler="on_back_btn_clicked"/>
+              </object>
+            </child>
+          </object>
+
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="padding">0</property>
+          </packing>
+        </child>
+      </object>
+
+      <packing>
+        <property name="name">items</property>
+      </packing>
+    </child>
+  </template>
+</interface>
+

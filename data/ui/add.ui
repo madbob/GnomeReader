@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <!-- interface-requires gtk+ 3.8 -->
+  <template class="ReaderChannelAdd" parent="GtkBox">
+    <property name="visible">True</property>
+
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">10</property>
+
+        <child>
+          <object class="GtkLabel" id="addnew-label">
+            <property name="visible">True</property>
+            <property name="valign">center</property>
+            <property name="label" translatable="yes">Copy here the URL of the feed.</property>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkEntry" id="addnewentry">
+            <property name="visible">True</property>
+            <property name="valign">center</property>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkBox" id="addnew-buttons">
+            <property name="visible">True</property>
+            <property name="hexpand">True</property>
+
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="hexpand">True</property>
+                <property name="valign">center</property>
+                <property name="label" translatable="yes">Save</property>
+                <signal name="clicked" handler="on_save_new_feed"/>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="hexpand">True</property>
+                <property name="valign">center</property>
+                <property name="label" translatable="yes">Cancel</property>
+                <signal name="clicked" handler="on_cancel_new_feed"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
+

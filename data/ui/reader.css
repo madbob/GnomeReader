@@ -1,0 +1,24 @@
+.channels {
+	margin: 0px;
+	border: 0px;
+	font-size: 11px;
+	font-weight: bold;
+	padding: 0px;
+	background-color: @theme_bg_color;
+}
+
+.stack {
+	background-color: @theme_bg_color;
+}
+
+ReaderItemsView .title {
+	font-size: 10px;
+	font-weight: bold;
+	background-color: @theme_bg_color;
+}
+
+ReaderItemsView .date {
+	font-size: 7px;
+	background-color: @theme_bg_color;
+}
+

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <!-- interface-requires gtk+ 3.8 -->
+  <template class="ReaderAppWindow" parent="GtkApplicationWindow">
+    <property name="title" translatable="yes">Reader</property>
+    <property name="default-width">600</property>
+    <property name="default-height">400</property>
+
+    <child type="titlebar">
+      <object class="ReaderTopbar" id="topbar">
+        <property name="visible">True</property>
+      </object>
+    </child>
+
+    <child>
+      <object class="GtkStack" id="stack">
+        <property name="visible">True</property>
+        <property name="expand">True</property>
+        <property name="transition-type">crossfade</property>
+
+        <child>
+          <object class="GtkLabel" id="empty">
+            <property name="visible">True</property>
+            <property name="label" translatable="yes">There are no feed channels to display.</property>
+          </object>
+
+          <packing>
+            <property name="name">empty</property>
+          </packing>
+        </child>
+
+        <child>
+          <object class="ReaderChannelsView" id="channels">
+            <property name="visible">True</property>
+            <signal name="item-activated" handler="on_channel_selection_changed"/>
+          </object>
+
+          <packing>
+            <property name="name">channels</property>
+          </packing>
+        </child>
+
+        <child>
+          <object class="ReaderItemsView" id="items">
+            <property name="visible">True</property>
+          </object>
+
+          <packing>
+            <property name="name">items</property>
+          </packing>
+        </child>
+
+        <child>
+          <object class="ReaderChannelAdd" id="addnew">
+          </object>
+
+          <packing>
+            <property name="name">addnew</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

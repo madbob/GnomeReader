@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <!-- interface-requires gtk+ 3.8 -->
+  <template class="ReaderItemsView" parent="GtkBox">
+    <property name="visible">True</property>
+
+    <child>
+      <object class="GtkStack" id="stack">
+        <property name="visible">True</property>
+        <property name="expand">True</property>
+        <property name="transition-type">crossfade</property>
+
+        <child>
+          <object class="GtkLabel" id="empty">
+            <property name="visible">True</property>
+            <property name="label" translatable="yes">There are no items to display.</property>
+          </object>
+
+          <packing>
+            <property name="name">empty</property>
+          </packing>
+        </child>
+
+        <child>
+          <object class="GtkPaned">
+            <property name="visible">True</property>
+            <property name="orientation">horizontal</property>
+            <property name="expand">True</property>
+            <property name="position">300</property>
+
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="visible">True</property>
+                <property name="hscrollbar-policy">automatic</property>
+                <property name="vscrollbar-policy">automatic</property>
+
+                <child>
+                  <object class="GtkTreeView" id="items">
+                    <property name="visible">True</property>
+                    <property name="activate-on-single-click">True</property>
+                    <property name="headers-visible">False</property>
+                    <property name="show-expanders">False</property>
+
+                    <child>
+                      <object class="GtkTreeViewColumn" id="title-column">
+                        <property name="title"></property>
+                        <child>
+                          <object class="GtkCellRendererText" id="text-renderer">
+                            <property name="visible">True</property>
+                          </object>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                            <attribute name="weight">5</attribute>
+                            <attribute name="background">6</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="selection">
+                        <property name="mode">GTK_SELECTION_SINGLE</property>
+                        <signal name="changed" handler="on_item_selection_changed"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkStack" id="webstack">
+                <property name="visible">True</property>
+                <property name="expand">True</property>
+                <property name="transition-type">crossfade</property>
+
+                <child>
+                  <!-- TODO the channel homepage should be used in more useful way -->
+
+                  <object class="GtkLabel" id="webempty">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Select an item on the left.</property>
+                  </object>
+
+                  <packing>
+                    <property name="name">webempty</property>
+                  </packing>
+                </child>
+
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="orientation">vertical</property>
+                    <property name="expand">True</property>
+                    <property name="spacing">0</property>
+
+                    <child>
+                      <object class="GtkLinkButton" id="title">
+                        <property name="visible">True</property>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="GtkLabel" id="date">
+                        <property name="visible">True</property>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="WebkitWebView" id="webview">
+                        <property name="visible">True</property>
+                        <property name="expand">True</property>
+                      </object>
+                    </child>
+                  </object>
+
+                  <packing>
+                    <property name="name">webcontents</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
+          </object>
+
+          <packing>
+            <property name="name">contents</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
+

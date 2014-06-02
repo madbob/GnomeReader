@@ -1,0 +1,51 @@
+Gnome (Unofficial) Reader - a feed reader for Gnome
+===============================================================================
+
+Gnome (Unofficial) Reader is a feed reader built for the Gnome desktop
+environment.
+
+Inspired by:
+https://wiki.gnome.org/Design/Apps/Potential/News
+https://github.com/gnome-design-team/gnome-prototypes/blob/master/feed/feeds.png
+
+REQUIREMENTS
+-------------------------------------------------------------------------------
+
+  - gtk+-3.0 >= 3.11.6
+  - tracker-sparql-0.16 >= 0.16.2
+  - webkit2gtk-3.0 >= 2.2.6
+  - libgrss-0.5 >= 0.5.0
+
+Gnome (Unofficial) Reader uses Tracker as backend, and requires
+tracker-miner-rss to be available. This way all the business logic about
+fetching and updating feeds is delegated, here is implemented just the frontend
+to browse contents.
+
+TODO
+-------------------------------------------------------------------------------
+
+In Reader
+  - display number of unread items for channels
+  - fuzzy dates in items list (at least "Today" and "Yesterday")
+  - ability to import from OPML (via libgrss)
+  - meta-channel including all unread items from all channels
+  - handle enclosures (for podcasts?)
+  - use the channel's home screen in smart way
+  - ability to tag items
+
+Involving tracker-miner-rss
+  - properly update mfo:unreadCount
+  - handle fetching and caching of embedded contents (e.g. images)
+
+Involving libgrss
+  - discover favicon of the channel (cfr. favicon.c in Liferea)
+  - discover relevant image in item, to be used as cover
+
+COPYRIGHT AND LICENSING
+-------------------------------------------------------------------------------
+
+Gnome (Unofficial) Reader is released under the terms of the GNU General Public
+License, version 3 or, at your option, any later version.
+
+Copyright (C) 2014 Roberto Guido <rguido@src.gnome.org>
+
