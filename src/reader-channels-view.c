@@ -41,6 +41,24 @@ struct _ReaderChannelsViewPrivate
 G_DEFINE_TYPE_WITH_PRIVATE(ReaderChannelsView, reader_channels_view, GD_TYPE_MAIN_VIEW);
 
 static void
+reader_channels_view_constructed (GObject *obj)
+{
+	GtkWidget *view;
+	GtkCellRenderer *cell;
+
+	G_OBJECT_CLASS (reader_channels_view_parent_class)->constructed (obj);
+
+	cell = gtk_cell_renderer_text_new ();
+	g_object_set (cell,
+	              "xalign", 0.9, "yalign", 0.9, NULL);
+
+	view = gd_main_view_get_generic_view (GD_MAIN_VIEW (obj));
+	gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (view), cell, FALSE);
+	gtk_cell_layout_reorder (GTK_CELL_LAYOUT (view), cell, 0);
+	gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (view), cell, "text", EXTRA_COLUMN_UNREADS);
+}
+
+static void
 reader_channels_view_init (ReaderChannelsView *win)
 {
 	gd_main_view_set_view_type (GD_MAIN_VIEW (win), GD_MAIN_VIEW_ICON);
@@ -49,6 +67,7 @@ reader_channels_view_init (ReaderChannelsView *win)
 static void
 reader_channels_view_class_init (ReaderChannelsViewClass *class)
 {
+	G_OBJECT_CLASS (class)->constructed = reader_channels_view_constructed;
 }
 
 ReaderChannelsView*

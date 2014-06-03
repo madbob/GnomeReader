@@ -25,7 +25,6 @@ TODO
 -------------------------------------------------------------------------------
 
 In Reader
-  - display number of unread items for channels
   - fuzzy dates in items list (at least "Today" and "Yesterday")
   - ability to import from OPML (via libgrss)
   - meta-channel including all unread items from all channels
