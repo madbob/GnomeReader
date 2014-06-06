@@ -510,6 +510,52 @@ handle_channel_inserts (ReaderEngine *engine,
 }
 
 static void
+remove_channel_data (GtkTreeModel *model, GtkTreeIter *iter)
+{
+	GtkListStore *items;
+	GDateTime *gdate;
+	GtkTreeIter subiter;
+
+	gtk_tree_model_get (model, iter, EXTRA_COLUMN_FEEDS_MODEL, &items, -1);
+
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &subiter) != FALSE) {
+		do {
+			gtk_tree_model_get (GTK_TREE_MODEL (items), &subiter, ITEM_COLUMN_TIME, &gdate, -1);
+			g_date_time_unref (gdate);
+		} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &subiter));
+	}
+
+	g_object_unref (items);
+}
+
+static void
+handle_channel_deletes (ReaderEngine *engine,
+                        gint sub)
+{
+	gchar *query;
+	const gchar *subject;
+	GtkTreeIter *iter;
+	TrackerSparqlCursor *cursor;
+	ReaderEnginePrivate *priv;
+
+	priv = reader_engine_get_instance_private (engine);
+
+	query = g_strdup_printf ("SELECT tracker:uri(%d) {}", sub);
+	cursor = tracker_sparql_connection_query (priv->tracker, query, NULL, NULL);
+	tracker_sparql_cursor_next (cursor, NULL, NULL);
+	subject = tracker_sparql_cursor_get_string (cursor, 0, NULL);
+
+	if (find_in_model (GTK_TREE_MODEL (priv->data), GD_MAIN_COLUMN_ID, subject, &iter)) {
+		remove_channel_data (GTK_TREE_MODEL (priv->data), iter);
+		gtk_list_store_remove (priv->data, iter);
+		gtk_tree_iter_free (iter);
+	}
+
+	g_free (query);
+	g_object_unref (cursor);
+}
+
+static void
 on_graph_update (GDBusConnection *connection,
                  const gchar *sender_name,
                  const gchar *object_path,
@@ -525,14 +571,8 @@ on_graph_update (GDBusConnection *connection,
 	g_variant_get (parameters, "(&sa(iiii)a(iiii))", &class_name, &iter1, &iter2);
 
 	if (strcmp (class_name, "http://www.tracker-project.org/temp/mfo#FeedChannel") == 0) {
-		/*
-
-		TODO
-
 		while (g_variant_iter_loop (iter1, "(iiii)", &graph, &subject, &predicate, &object))
-			handle_deletes (subject);
-
-		*/
+			handle_channel_deletes (engine, subject);
 
 		while (g_variant_iter_loop (iter2, "(iiii)", &graph, &subject, &predicate, &object))
 			handle_channel_inserts (engine, subject);
@@ -559,9 +599,6 @@ static void
 reader_engine_finalize (GObject *object)
 {
 	GtkTreeIter iter;
-	GtkTreeIter subiter;
-	GtkListStore *items;
-	GDateTime *gdate;
 	ReaderEngine *engine;
 	ReaderEnginePrivate *priv;
 
@@ -572,16 +609,7 @@ reader_engine_finalize (GObject *object)
 		return;
 
 	do {
-		gtk_tree_model_get (GTK_TREE_MODEL (priv->data), &iter, EXTRA_COLUMN_FEEDS_MODEL, &items, -1);
-
-		if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &subiter) != FALSE) {
-			do {
-				gtk_tree_model_get (GTK_TREE_MODEL (items), &subiter, ITEM_COLUMN_TIME, &gdate, -1);
-				g_date_time_unref (gdate);
-			} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &subiter));
-		}
-
-		g_object_unref (items);
+		remove_channel_data (GTK_TREE_MODEL (priv->data), &iter);
 	} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->data), &iter));
 
 	g_object_unref (priv->data);
@@ -678,5 +706,41 @@ reader_engine_push_channel (ReaderEngine *engine,
 	tracker_sparql_connection_update_blank_async (priv->tracker, query, 0, NULL,
 	                                              (GAsyncReadyCallback) verify_tracker_update, NULL);
 	g_free (query);
+}
+
+void
+reader_engine_delete_channels (ReaderEngine *engine,
+                               GList *channels)
+{
+	gchar *query;
+	gchar *subject;
+	GList *liter;
+	GtkTreeIter iter;
+	ReaderEnginePrivate *priv;
+
+	priv = reader_engine_get_instance_private (engine);
+
+	for (liter = channels; liter; liter = liter->next) {
+		gtk_tree_model_get_iter (GTK_TREE_MODEL (priv->data), &iter, liter->data);
+		gtk_tree_model_get (GTK_TREE_MODEL (priv->data), &iter, GD_MAIN_COLUMN_ID, &subject, -1);
+
+		query = g_strdup_printf ("DELETE {?s a rdfs:Resource} WHERE {<%s> mfo:feedSettings ?s}; "
+		                         "DELETE {?i a rdfs:Resource} WHERE {?i nmo:communicationChannel <%s>}; "
+		                         "DELETE {<%s> a rdfs:Resource}", subject, subject, subject);
+
+		tracker_sparql_connection_update_async (priv->tracker, query, 0, NULL,
+			                                (GAsyncReadyCallback) verify_tracker_update, NULL);
+		g_free (query);
+		g_free (subject);
+
+		gtk_tree_path_free (liter->data);
+
+		/*
+			The channel itself is removed from the local data
+			structure after receiving the proper signal from DBus
+		*/
+	}
+
+	g_list_free (channels);
 }
 

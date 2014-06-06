@@ -34,6 +34,8 @@ typedef struct _ReaderAppWindowClass    ReaderAppWindowClass;
 typedef enum {
 	READER_STATE_FRONT,
 	READER_STATE_ADD,
+	READER_STATE_SELECT,
+	READER_STATE_DELETE,
 	READER_STATE_ITEMVIEW
 } READER_APP_STATE;
 

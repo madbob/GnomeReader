@@ -41,6 +41,20 @@ on_new_btn_clicked (GtkButton *button,
 }
 
 static void
+on_select_btn_clicked (GtkButton *button,
+                       ReaderTopbar *bar)
+{
+	reader_app_window_change_state (mainWin, READER_STATE_SELECT);
+}
+
+static void
+on_delete_btn_clicked (GtkButton *button,
+                       ReaderTopbar *bar)
+{
+	reader_app_window_change_state (mainWin, READER_STATE_DELETE);
+}
+
+static void
 on_back_btn_clicked (GtkButton *button,
                      ReaderTopbar *bar)
 {
@@ -67,6 +81,8 @@ reader_topbar_class_init (ReaderTopbarClass *class)
 	gtk_widget_class_set_template_from_resource (GTK_WIDGET_CLASS (class), "/org/gnome/reader/ui/topbar.ui");
 
 	gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (class), on_new_btn_clicked);
+	gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (class), on_select_btn_clicked);
+	gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (class), on_delete_btn_clicked);
 	gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (class), on_back_btn_clicked);
 }
 

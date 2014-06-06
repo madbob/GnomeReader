@@ -53,10 +53,7 @@ struct _ReaderAppWindowPrivate
 G_DEFINE_TYPE_WITH_PRIVATE(ReaderAppWindow, reader_app_window, GTK_TYPE_APPLICATION_WINDOW);
 
 static void
-test_empty_event (GtkTreeModel *tree_model,
-                  GtkTreePath *path,
-                  GtkTreeIter *iter,
-                  ReaderAppWindow *win)
+test_empty_event (ReaderAppWindow *win)
 {
 	reader_app_window_change_state (win, READER_STATE_FRONT);
 }
@@ -110,8 +107,8 @@ reader_app_window_init (ReaderAppWindow *win)
 	gtk_style_context_add_class (gtk_widget_get_style_context (GTK_WIDGET (priv->channels)), "channels");
 
 	model = reader_engine_get_channels_model (priv->engine);
-	g_signal_connect (model, "row-inserted", G_CALLBACK (test_empty_event), win);
-	g_signal_connect (model, "row-deleted", G_CALLBACK (test_empty_event), win);
+	g_signal_connect_swapped (model, "row-inserted", G_CALLBACK (test_empty_event), win);
+	g_signal_connect_swapped (model, "row-deleted", G_CALLBACK (test_empty_event), win);
 }
 
 static void
@@ -164,12 +161,23 @@ reader_app_window_change_state (ReaderAppWindow *win, READER_APP_STATE state)
 			else
 				gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "channels");
 
+			gd_main_view_set_selection_mode (GD_MAIN_VIEW (priv->channels), FALSE);
 			gtk_stack_set_visible_child_name (GTK_STACK (priv->topbar), "front");
 			break;
 
 		case READER_STATE_ADD:
 			gtk_stack_set_visible_child_name (GTK_STACK (priv->topbar), "addnew");
 			gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "addnew");
+			break;
+
+		case READER_STATE_SELECT:
+			gd_main_view_set_selection_mode (GD_MAIN_VIEW (priv->channels), TRUE);
+			gtk_stack_set_visible_child_name (GTK_STACK (priv->topbar), "edit");
+			break;
+
+		case READER_STATE_DELETE:
+			reader_engine_delete_channels (priv->engine, gd_main_view_get_selection (GD_MAIN_VIEW (priv->channels)));
+			reader_app_window_change_state (win, READER_STATE_FRONT);
 			break;
 
 		case READER_STATE_ITEMVIEW:

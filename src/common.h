@@ -32,7 +32,7 @@
 #define UNREAD_FONT_WEIGHT		600
 #define READ_FONT_WEIGHT		400
 
-#define ICON_SIZE			30
+#define ICON_SIZE			50
 
 #include "reader-appwin.h"
 ReaderAppWindow *mainWin;

@@ -33,7 +33,6 @@ In Reader
   - ability to tag items
 
 Involving tracker-miner-rss
-  - properly update mfo:unreadCount
   - handle fetching and caching of embedded contents (e.g. images)
 
 Involving libgrss

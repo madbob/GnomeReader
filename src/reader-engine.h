@@ -53,6 +53,7 @@ ReaderEngine* reader_engine_new ();
 GtkTreeModel* reader_engine_get_channels_model (ReaderEngine *engine);
 GtkTreeModel* reader_engine_get_items_model (ReaderEngine *engine, const gchar *channel);
 void reader_engine_push_channel (ReaderEngine *engine, GrssFeedChannel *channel);
+void reader_engine_delete_channels (ReaderEngine *engine, GList *channels);
 
 #endif /* __READERENGINE_H */
 
