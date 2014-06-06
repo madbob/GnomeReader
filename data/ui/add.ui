@@ -51,6 +51,30 @@
             </child>
           </object>
         </child>
+
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="valign">center</property>
+            <property name="label" translatable="yes">OR</property>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="valign">center</property>
+            <property name="label" translatable="yes">Select an OPML file to import.</property>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkFileChooserButton" id="addnew-file">
+            <property name="visible">True</property>
+            <property name="valign">center</property>
+            <signal name="file-set" handler="on_save_new_opml"/>
+          </object>
+        </child>
       </object>
     </child>
   </template>

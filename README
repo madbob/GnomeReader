@@ -26,7 +26,6 @@ TODO
 
 In Reader
   - fuzzy dates in items list (at least "Today" and "Yesterday")
-  - ability to import from OPML (via libgrss)
   - meta-channel including all unread items from all channels
   - handle enclosures (for podcasts?)
   - use the channel's home screen in smart way

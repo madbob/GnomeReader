@@ -57,6 +57,8 @@ on_channel_fetched (GObject *source,
 	else {
 		reader_engine_push_channel (reader_app_window_get_engine (mainWin), channel);
 	}
+
+	g_object_unref (channel);
 }
 
 static void
@@ -69,8 +71,42 @@ on_save_new_feed (GtkButton *button,
 
 	priv = reader_channel_add_get_instance_private (add);
 	url = gtk_entry_get_text (GTK_ENTRY (priv->addnewentry));
+	if (url == '\0')
+		return;
+
+	/*
+		TODO	Validate the URL
+	*/
+
 	channel = grss_feed_channel_new_with_source ((gchar*) url);
 	grss_feed_channel_fetch_async (channel, (GAsyncReadyCallback) on_channel_fetched, add);
+
+	reader_app_window_change_state (mainWin, READER_STATE_FRONT);
+}
+
+static void
+on_save_new_opml (GtkFileChooserButton *widget,
+                  ReaderChannelAdd *add)
+{
+	GList *iter;
+	GList *channels;
+	GrssFeedsGroup *group;
+	GError *error = NULL;
+
+	group = grss_feeds_group_new ();
+	channels = grss_feeds_group_parse_file (group, gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (widget)), &error);
+	g_object_unref (group);
+
+	if (error != NULL) {
+		g_warning ("Unable to read file: %s", error->message);
+		g_error_free (error);
+		return;
+	}
+
+	for (iter = channels; iter; iter = iter->next)
+		grss_feed_channel_fetch_async (iter->data, (GAsyncReadyCallback) on_channel_fetched, add);
+
+	g_list_free (channels);
 
 	reader_app_window_change_state (mainWin, READER_STATE_FRONT);
 }
@@ -104,6 +140,7 @@ reader_channel_add_class_init (ReaderChannelAddClass *class)
 	gtk_widget_class_bind_template_child_private (GTK_WIDGET_CLASS (class), ReaderChannelAdd, addnewentry);
 
 	gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (class), on_save_new_feed);
+	gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (class), on_save_new_opml);
 	gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (class), on_cancel_new_feed);
 }
 
