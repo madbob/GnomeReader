@@ -74,13 +74,13 @@ on_save_new_feed (GtkButton *button,
 	if (url == '\0')
 		return;
 
-	/*
-		TODO	Validate the URL
-	*/
-
 	channel = grss_feed_channel_new_with_source ((gchar*) url);
-	grss_feed_channel_fetch_async (channel, (GAsyncReadyCallback) on_channel_fetched, add);
+	if (channel == NULL) {
+		g_warning ("Invalid feed channel");
+		return;
+	}
 
+	grss_feed_channel_fetch_async (channel, (GAsyncReadyCallback) on_channel_fetched, add);
 	reader_app_window_change_state (mainWin, READER_STATE_FRONT);
 }
 
@@ -102,6 +102,14 @@ on_save_new_opml (GtkFileChooserButton *widget,
 		g_error_free (error);
 		return;
 	}
+
+	/*
+		TODO	Display a panel to select which channels to import
+	*/
+
+	/*
+		TODO	Already existing channel should not be re-created
+	*/
 
 	for (iter = channels; iter; iter = iter->next)
 		grss_feed_channel_fetch_async (iter->data, (GAsyncReadyCallback) on_channel_fetched, add);

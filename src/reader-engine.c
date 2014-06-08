@@ -556,13 +556,13 @@ handle_channel_deletes (ReaderEngine *engine,
 }
 
 static void
-on_graph_update (GDBusConnection *connection,
-                 const gchar *sender_name,
-                 const gchar *object_path,
-                 const gchar *interface_name,
-                 const gchar *signal_name,
-                 GVariant *parameters,
-                 ReaderEngine *engine)
+on_message_update (GDBusConnection *connection,
+                   const gchar *sender_name,
+                   const gchar *object_path,
+                   const gchar *interface_name,
+                   const gchar *signal_name,
+                   GVariant *parameters,
+                   ReaderEngine *engine)
 {
 	GVariantIter *iter1, *iter2;
 	gchar *class_name;
@@ -570,26 +570,42 @@ on_graph_update (GDBusConnection *connection,
 
 	g_variant_get (parameters, "(&sa(iiii)a(iiii))", &class_name, &iter1, &iter2);
 
-	if (strcmp (class_name, "http://www.tracker-project.org/temp/mfo#FeedChannel") == 0) {
-		while (g_variant_iter_loop (iter1, "(iiii)", &graph, &subject, &predicate, &object))
-			handle_channel_deletes (engine, subject);
+	/*
 
-		while (g_variant_iter_loop (iter2, "(iiii)", &graph, &subject, &predicate, &object))
-			handle_channel_inserts (engine, subject);
-	}
-	else if (strcmp (class_name, "http://www.tracker-project.org/temp/mfo#FeedMessage") == 0) {
-		/*
+	TODO
 
-		TODO
+	while (g_variant_iter_loop (iter1, "(iiii)", &graph, &subject, &predicate, &object))
+		handle_feed_deletes (engine, subject);
 
-		while (g_variant_iter_loop (iter1, "(iiii)", &graph, &subject, &predicate, &object))
-			handle_deletes (subject);
+	*/
 
-		*/
+	while (g_variant_iter_loop (iter2, "(iiii)", &graph, &subject, &predicate, &object))
+		handle_feed_inserts (engine, subject);
 
-		while (g_variant_iter_loop (iter2, "(iiii)", &graph, &subject, &predicate, &object))
-			handle_feed_inserts (engine, subject);
-	}
+	g_variant_iter_free (iter1);
+	g_variant_iter_free (iter2);
+}
+
+static void
+on_channel_update (GDBusConnection *connection,
+                   const gchar *sender_name,
+                   const gchar *object_path,
+                   const gchar *interface_name,
+                   const gchar *signal_name,
+                   GVariant *parameters,
+                   ReaderEngine *engine)
+{
+	GVariantIter *iter1, *iter2;
+	gchar *class_name;
+	gint graph = 0, subject = 0, predicate = 0, object = 0;
+
+	g_variant_get (parameters, "(&sa(iiii)a(iiii))", &class_name, &iter1, &iter2);
+
+	while (g_variant_iter_loop (iter1, "(iiii)", &graph, &subject, &predicate, &object))
+		handle_channel_deletes (engine, subject);
+
+	while (g_variant_iter_loop (iter2, "(iiii)", &graph, &subject, &predicate, &object))
+		handle_channel_inserts (engine, subject);
 
 	g_variant_iter_free (iter1);
 	g_variant_iter_free (iter2);
@@ -634,10 +650,22 @@ reader_engine_init (ReaderEngine *engine)
 	                                 G_TYPE_INT, G_TYPE_POINTER);
 
 	g_dbus_connection_signal_subscribe (priv->connection,
-	                                    TRACKER_DBUS_SERVICE, TRACKER_DBUS_INTERFACE_RESOURCES,
-	                                    "GraphUpdated", TRACKER_DBUS_OBJECT_RESOURCES,
-	                                    NULL, G_DBUS_SIGNAL_FLAGS_NONE,
-	                                    (GDBusSignalCallback) on_graph_update, engine, NULL);
+	                                    TRACKER_DBUS_SERVICE,
+	                                    TRACKER_DBUS_INTERFACE_RESOURCES,
+	                                    "GraphUpdated",
+	                                    TRACKER_DBUS_OBJECT_RESOURCES,
+	                                    "http://www.tracker-project.org/temp/mfo#FeedChannel",
+	                                    G_DBUS_SIGNAL_FLAGS_NONE,
+	                                    (GDBusSignalCallback) on_channel_update, engine, NULL);
+
+	g_dbus_connection_signal_subscribe (priv->connection,
+	                                    TRACKER_DBUS_SERVICE,
+	                                    TRACKER_DBUS_INTERFACE_RESOURCES,
+	                                    "GraphUpdated",
+	                                    TRACKER_DBUS_OBJECT_RESOURCES,
+	                                    "http://www.tracker-project.org/temp/mfo#FeedMessage",
+	                                    G_DBUS_SIGNAL_FLAGS_NONE,
+	                                    (GDBusSignalCallback) on_message_update, engine, NULL);
 
 	collect_channels (engine, NULL);
 }
