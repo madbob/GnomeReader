@@ -5,30 +5,58 @@
     <property name="visible">True</property>
 
     <child>
-      <object class="GtkBox">
+      <object class="GtkStack" id="stack">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">10</property>
+        <property name="transition-type">slide-left-right</property>
+        <property name="transition-duration">400</property>
+        <property name="margin">10</property>
+        <property name="expand">True</property>
 
         <child>
-          <object class="GtkLabel" id="addnew-label">
+          <object class="GtkBox">
             <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">0</property>
+            <property name="expand">True</property>
             <property name="valign">center</property>
-            <property name="label" translatable="yes">Copy here the URL of the feed.</property>
+
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="valign">center</property>
+                <property name="label" translatable="yes">Copy URL</property>
+                <signal name="clicked" handler="on_new_by_url_btn_clicked"/>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="valign">center</property>
+                <property name="label" translatable="yes">Import file</property>
+                <signal name="clicked" handler="on_new_by_file_btn_clicked"/>
+              </object>
+            </child>
           </object>
+
+          <packing>
+            <property name="name">start</property>
+          </packing>
         </child>
 
         <child>
-          <object class="GtkEntry" id="addnewentry">
+          <object class="GtkBox">
             <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <property name="expand">True</property>
             <property name="valign">center</property>
-          </object>
-        </child>
 
-        <child>
-          <object class="GtkBox" id="addnew-buttons">
-            <property name="visible">True</property>
-            <property name="hexpand">True</property>
+            <child>
+              <object class="GtkEntry" id="urlentry">
+                <property name="visible">True</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
 
             <child>
               <object class="GtkButton">
@@ -36,46 +64,104 @@
                 <property name="hexpand">True</property>
                 <property name="valign">center</property>
                 <property name="label" translatable="yes">Save</property>
-                <signal name="clicked" handler="on_save_new_feed"/>
+                <signal name="clicked" handler="on_save_by_url"/>
               </object>
+            </child>
+          </object>
+
+          <packing>
+            <property name="name">byurl</property>
+          </packing>
+        </child>
+
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">0</property>
+            <property name="expand">True</property>
+
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="visible">True</property>
+                <property name="hscrollbar-policy">automatic</property>
+                <property name="vscrollbar-policy">automatic</property>
+
+                <child>
+                  <object class="GtkTreeView" id="entrieslist">
+                    <property name="visible">True</property>
+                    <property name="headers-visible">False</property>
+
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title"></property>
+                        <child>
+                          <object class="GtkCellRendererToggle">
+                            <property name="visible">True</property>
+                            <signal name="toggled" handler="on_switch_channel_include"/>
+                          </object>
+                          <attributes>
+                            <attribute name="active">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title"></property>
+                        <child>
+                          <object class="GtkCellRendererText">
+                            <property name="visible">True</property>
+                          </object>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+              </packing>
             </child>
 
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="entriessave">
                 <property name="visible">True</property>
                 <property name="hexpand">True</property>
                 <property name="valign">center</property>
-                <property name="label" translatable="yes">Cancel</property>
-                <signal name="clicked" handler="on_cancel_new_feed"/>
+                <property name="label" translatable="yes">Save</property>
+                <signal name="clicked" handler="on_save_by_file"/>
               </object>
             </child>
           </object>
+
+          <packing>
+            <property name="name">selectchannels</property>
+          </packing>
         </child>
 
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="empty">
             <property name="visible">True</property>
-            <property name="valign">center</property>
-            <property name="label" translatable="yes">OR</property>
+            <property name="label" translatable="yes">There are no channels to import.</property>
           </object>
-        </child>
 
-        <child>
-          <object class="GtkLabel">
-            <property name="visible">True</property>
-            <property name="valign">center</property>
-            <property name="label" translatable="yes">Select an OPML file to import.</property>
-          </object>
-        </child>
-
-        <child>
-          <object class="GtkFileChooserButton" id="addnew-file">
-            <property name="visible">True</property>
-            <property name="valign">center</property>
-            <signal name="file-set" handler="on_save_new_opml"/>
-          </object>
+          <packing>
+            <property name="name">empty</property>
+          </packing>
         </child>
       </object>
+
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+      </packing>
     </child>
   </template>
 </interface>

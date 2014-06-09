@@ -25,6 +25,7 @@
 #include "reader-appwin.h"
 #include "reader-engine.h"
 #include "reader-topbar.h"
+#include "reader-channel-add.h"
 #include "reader-channels-view.h"
 #include "reader-items-view.h"
 #include "reader-channel-add.h"
@@ -48,6 +49,7 @@ struct _ReaderAppWindowPrivate
 	ReaderTopbar *topbar;
 	ReaderChannelsView *channels;
 	ReaderItemsView *items;
+	ReaderChannelAdd *addnew;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE(ReaderAppWindow, reader_app_window, GTK_TYPE_APPLICATION_WINDOW);
@@ -105,6 +107,7 @@ reader_app_window_init (ReaderAppWindow *win)
 	gtk_style_context_add_class (gtk_widget_get_style_context (GTK_WIDGET (priv->stack)), "stack");
 	gtk_style_context_add_class (gtk_widget_get_style_context (GTK_WIDGET (priv->topbar)), "topbar");
 	gtk_style_context_add_class (gtk_widget_get_style_context (GTK_WIDGET (priv->channels)), "channels");
+	gtk_style_context_add_class (gtk_widget_get_style_context (GTK_WIDGET (priv->channels)), "addnew");
 
 	model = reader_engine_get_channels_model (priv->engine);
 	g_signal_connect_swapped (model, "row-inserted", G_CALLBACK (test_empty_event), win);
@@ -129,6 +132,7 @@ reader_app_window_class_init (ReaderAppWindowClass *class)
 	gtk_widget_class_bind_template_child_private (GTK_WIDGET_CLASS (class), ReaderAppWindow, topbar);
 	gtk_widget_class_bind_template_child_private (GTK_WIDGET_CLASS (class), ReaderAppWindow, channels);
 	gtk_widget_class_bind_template_child_private (GTK_WIDGET_CLASS (class), ReaderAppWindow, items);
+	gtk_widget_class_bind_template_child_private (GTK_WIDGET_CLASS (class), ReaderAppWindow, addnew);
 
 	gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (class), on_channel_selection_changed);
 }
@@ -161,6 +165,7 @@ reader_app_window_change_state (ReaderAppWindow *win, READER_APP_STATE state)
 			else
 				gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "channels");
 
+			reader_channel_add_reset (priv->addnew);
 			gd_main_view_set_selection_mode (GD_MAIN_VIEW (priv->channels), FALSE);
 			gtk_stack_set_visible_child_name (GTK_STACK (priv->topbar), "front");
 			break;

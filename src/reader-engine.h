@@ -33,6 +33,7 @@ typedef struct _ReaderEngineClass    ReaderEngineClass;
 
 enum {
 	EXTRA_COLUMN_UNREADS = GD_MAIN_COLUMN_LAST,
+	EXTRA_COLUMN_URL,
 	EXTRA_COLUMN_FEEDS_MODEL,
 	EXTRA_COLUMN_LAST
 } CHANNELS_MODEL_COLUMNS;
@@ -52,6 +53,7 @@ GType reader_engine_get_type (void);
 ReaderEngine* reader_engine_new ();
 GtkTreeModel* reader_engine_get_channels_model (ReaderEngine *engine);
 GtkTreeModel* reader_engine_get_items_model (ReaderEngine *engine, const gchar *channel);
+gboolean reader_engine_has_channel (ReaderEngine *engine, const gchar *url);
 void reader_engine_push_channel (ReaderEngine *engine, GrssFeedChannel *channel);
 void reader_engine_delete_channels (ReaderEngine *engine, GList *channels);
 

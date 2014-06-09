@@ -130,7 +130,9 @@ find_in_model (GtkTreeModel *model,
 
 	do {
 		gtk_tree_model_get (model, &iter, column, &value, -1);
+
 		if (strcmp (value, id) == 0) {
+			g_free (value);
 			done = TRUE;
 			break;
 		}
@@ -139,7 +141,7 @@ find_in_model (GtkTreeModel *model,
 
 	} while (done == FALSE && gtk_tree_model_iter_next (model, &iter));
 
-	if (done == TRUE)
+	if (done == TRUE && target != NULL)
 		*target = gtk_tree_iter_copy (&iter);
 
 	return done;
@@ -382,7 +384,7 @@ get_icon_for_channel (const gchar *url)
 	if (url != NULL) {
 		ret = gdk_pixbuf_new_from_resource_at_scale (url, ICON_SIZE, ICON_SIZE, TRUE, &error);
 		if (ret == NULL) {
-			g_warning ("Unable to build icon for channel: %s", error->message);
+			g_message ("Unable to build icon for channel: %s", error->message);
 			g_error_free (error);
 		}
 	}
@@ -401,6 +403,7 @@ pass_channels (ReaderEngine *engine,
 {
 	const gchar *subject;
 	const gchar *title;
+	const gchar *url;
 	gint64 unread;
 	GtkTreeModel *model;
 	GtkTreeIter *iter;
@@ -417,6 +420,7 @@ pass_channels (ReaderEngine *engine,
 			subject = tracker_sparql_cursor_get_string (cursor, 0, NULL);
 			title = tracker_sparql_cursor_get_string (cursor, 1, NULL);
 			unread = tracker_sparql_cursor_get_integer (cursor, 2);
+			url = tracker_sparql_cursor_get_string (cursor, 4, NULL);
 
 			if (find_in_model (model, GD_MAIN_COLUMN_ID, subject, &iter)) {
 				gtk_list_store_set (GTK_LIST_STORE (model), iter,
@@ -439,6 +443,7 @@ pass_channels (ReaderEngine *engine,
 				                    GD_MAIN_COLUMN_PRIMARY_TEXT, title,
 				                    GD_MAIN_COLUMN_ICON, icon,
 				                    EXTRA_COLUMN_UNREADS, unread,
+				                    EXTRA_COLUMN_URL, url,
 				                    EXTRA_COLUMN_FEEDS_MODEL, items_model, -1);
 			}
 
@@ -478,9 +483,16 @@ collect_channels (ReaderEngine *engine,
 	priv = reader_engine_get_instance_private (engine);
 
 	if (subject == NULL)
-		query = g_strdup ("SELECT ?s ?t ?u ?i WHERE {?s a mfo:FeedChannel; nie:title ?t; mfo:unreadCount ?u; mfo:image ?i}");
+		query = g_strdup ("SELECT ?s ?t ?u ?i ?r WHERE {?s a mfo:FeedChannel; "
+		                                                "nie:title ?t; "
+		                                                "mfo:unreadCount ?u; "
+		                                                "mfo:image ?i; "
+		                                                "nie:url ?r}");
 	else
-		query = g_strdup_printf ("SELECT <%s> ?t ?u ?i WHERE { <%s> nie:title ?t; mfo:unreadCount ?u; mfo:image ?i}",
+		query = g_strdup_printf ("SELECT <%s> ?t ?u ?i ?r WHERE { <%s> nie:title ?t; "
+		                                                      "mfo:unreadCount ?u; "
+		                                                      "mfo:image ?i; "
+		                                                      "nie:url ?r}",
 		                         subject, subject);
 
 	tracker_sparql_connection_query_async (priv->tracker, query, NULL,
@@ -647,7 +659,7 @@ reader_engine_init (ReaderEngine *engine)
 	priv->data = gtk_list_store_new (EXTRA_COLUMN_LAST,
 	                                 G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
 	                                 GDK_TYPE_PIXBUF, G_TYPE_LONG, G_TYPE_BOOLEAN, G_TYPE_INT,
-	                                 G_TYPE_INT, G_TYPE_POINTER);
+	                                 G_TYPE_INT, G_TYPE_STRING, G_TYPE_POINTER);
 
 	g_dbus_connection_signal_subscribe (priv->connection,
 	                                    TRACKER_DBUS_SERVICE,
@@ -706,6 +718,16 @@ reader_engine_get_items_model (ReaderEngine *engine, const gchar *channel)
 	gtk_tree_model_get (GTK_TREE_MODEL (priv->data), iter, EXTRA_COLUMN_FEEDS_MODEL, &ret, -1);
 	gtk_tree_iter_free (iter);
 	return GTK_TREE_MODEL (ret);
+}
+
+gboolean
+reader_engine_has_channel (ReaderEngine *engine,
+                           const gchar *url)
+{
+	ReaderEnginePrivate *priv;
+
+	priv = reader_engine_get_instance_private (engine);
+	return find_in_model (GTK_TREE_MODEL (priv->data), EXTRA_COLUMN_URL, url, NULL);
 }
 
 void

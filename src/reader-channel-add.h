@@ -31,6 +31,7 @@ typedef struct _ReaderChannelAddClass    ReaderChannelAddClass;
 
 GType reader_channel_add_get_type (void);
 ReaderChannelAdd* reader_channel_add_new ();
+void reader_channel_add_reset (ReaderChannelAdd *add);
 
 #endif /* __READERCHANNELADD_H */
 
