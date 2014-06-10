@@ -42,7 +42,7 @@ struct _ReaderItemsViewPrivate
 	GtkTreeSelection *selection;
 
 	GtkStack *webstack;
-	GtkLinkButton *title;
+	GtkLabel *title;
 	GtkLabel *date;
 	WebKitWebView *webview;
 };
@@ -78,9 +78,7 @@ on_item_selection_changed (GtkTreeSelection *selection,
 						ITEM_COLUMN_READ, &read, -1);
 
 			gtk_stack_set_visible_child_name (GTK_STACK (priv->webstack), "webcontents");
-
-			gtk_button_set_label (GTK_BUTTON (priv->title), title);
-			gtk_link_button_set_uri (priv->title, url);
+			gtk_label_set_text (priv->title, title);
 
 			str_date = g_date_time_format (date, "%c");
 			gtk_label_set_text (priv->date, str_date);

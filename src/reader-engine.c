@@ -22,6 +22,9 @@
 #include "common.h"
 #include "reader-engine.h"
 
+#define FEED_CHANNEL_TRACKER_CLASS	"http://www.tracker-project.org/temp/mfo#FeedChannel"
+#define FEED_MESSAGE_TRACKER_CLASS	"http://www.tracker-project.org/temp/mfo#FeedMessage"
+
 struct _ReaderEngine
 {
 	GObject parent;
@@ -131,11 +134,8 @@ find_in_model (GtkTreeModel *model,
 	do {
 		gtk_tree_model_get (model, &iter, column, &value, -1);
 
-		if (strcmp (value, id) == 0) {
-			g_free (value);
+		if (strcmp (value, id) == 0)
 			done = TRUE;
-			break;
-		}
 
 		g_free (value);
 
@@ -148,12 +148,12 @@ find_in_model (GtkTreeModel *model,
 }
 
 static GDateTime*
-item_cursor_to_time (TrackerSparqlCursor *cursor)
+item_cursor_to_time (TrackerSparqlCursor *cursor, gint index)
 {
 	const gchar *date;
 	GTimeVal val;
 
-	date = tracker_sparql_cursor_get_string (cursor, 6, NULL);
+	date = tracker_sparql_cursor_get_string (cursor, index, NULL);
 	g_time_val_from_iso8601 (date, &val);
 	return g_date_time_new_from_timeval_local (&val);
 }
@@ -213,6 +213,7 @@ dispose_item_in_model (GtkTreeModel *model,
 
 	if (found == FALSE) {
 		date_str = g_date_time_format (date, "%x");
+		date = g_date_time_ref (date);
 
 		gtk_tree_store_insert (tstore, &parent, NULL, index);
 		gtk_tree_store_set (tstore, &parent,
@@ -267,7 +268,7 @@ pass_items (ReaderEngine *engine,
 				continue;
 
 			item_id = tracker_sparql_cursor_get_string (cursor, 1, NULL);
-			date = item_cursor_to_time (cursor);
+			date = item_cursor_to_time (cursor, 6);
 
 			if (dispose_item_in_model (model, item_id, date, &iter) == FALSE) {
 				g_signal_handlers_block_by_func (model, G_CALLBACK (model_item_changed), engine);
@@ -353,22 +354,27 @@ collect_items (ReaderEngine *engine,
 
 static void
 handle_feed_inserts (ReaderEngine *engine,
-                     gint sub)
+                     gint sub,
+                     gint obj)
 {
 	gchar *query;
 	const gchar *subject;
+	const gchar *object;
 	TrackerSparqlCursor *cursor;
 	ReaderEnginePrivate *priv;
 
 	priv = reader_engine_get_instance_private (engine);
 
-	query = g_strdup_printf ("SELECT tracker:uri(%d) {}", sub);
+	query = g_strdup_printf ("SELECT tracker:uri(%d) tracker:uri(%d) {}", sub, obj);
 	cursor = tracker_sparql_connection_query (priv->tracker, query, NULL, NULL);
-	g_free (query);
-
 	tracker_sparql_cursor_next (cursor, NULL, NULL);
 	subject = tracker_sparql_cursor_get_string (cursor, 0, NULL);
-	collect_items (engine, NULL, subject);
+	object = tracker_sparql_cursor_get_string (cursor, 1, NULL);
+
+	if (object != NULL && strcmp (object, FEED_MESSAGE_TRACKER_CLASS) == 0)
+		collect_items (engine, NULL, subject);
+
+	g_free (query);
 	g_object_unref (cursor);
 }
 
@@ -483,17 +489,18 @@ collect_channels (ReaderEngine *engine,
 	priv = reader_engine_get_instance_private (engine);
 
 	if (subject == NULL)
-		query = g_strdup ("SELECT ?s ?t ?u ?i ?r WHERE {?s a mfo:FeedChannel; "
-		                                                "nie:title ?t; "
-		                                                "mfo:unreadCount ?u; "
-		                                                "mfo:image ?i; "
-		                                                "nie:url ?r}");
+		query = g_strdup ("SELECT ?s ?t ?u ?i ?r "
+		                  "WHERE {?s a mfo:FeedChannel; "
+		                         "nie:title ?t; "
+		                         "mfo:unreadCount ?u; "
+		                         "mfo:image ?i; "
+		                         "nie:url ?r}");
 	else
-		query = g_strdup_printf ("SELECT <%s> ?t ?u ?i ?r WHERE { <%s> nie:title ?t; "
-		                                                      "mfo:unreadCount ?u; "
-		                                                      "mfo:image ?i; "
-		                                                      "nie:url ?r}",
-		                         subject, subject);
+		query = g_strdup_printf ("SELECT <%s> ?t ?u ?i ?r "
+		                         "WHERE {<%s> nie:title ?t; "
+		                                "mfo:unreadCount ?u; "
+		                                "mfo:image ?i; "
+		                                "nie:url ?r}", subject, subject);
 
 	tracker_sparql_connection_query_async (priv->tracker, query, NULL,
 	                                       (GAsyncReadyCallback) on_fetch_channels, engine);
@@ -502,20 +509,25 @@ collect_channels (ReaderEngine *engine,
 
 static void
 handle_channel_inserts (ReaderEngine *engine,
-                        gint sub)
+                        gint sub,
+                        gint obj)
 {
 	gchar *query;
 	const gchar *subject;
+	const gchar *object;
 	TrackerSparqlCursor *cursor;
 	ReaderEnginePrivate *priv;
 
 	priv = reader_engine_get_instance_private (engine);
 
-	query = g_strdup_printf ("SELECT tracker:uri(%d) {}", sub);
+	query = g_strdup_printf ("SELECT tracker:uri(%d) tracker:uri(%d) {}", sub, obj);
 	cursor = tracker_sparql_connection_query (priv->tracker, query, NULL, NULL);
 	tracker_sparql_cursor_next (cursor, NULL, NULL);
 	subject = tracker_sparql_cursor_get_string (cursor, 0, NULL);
-	collect_channels (engine, subject);
+	object = tracker_sparql_cursor_get_string (cursor, 1, NULL);
+
+	if (object != NULL && strcmp (object, FEED_CHANNEL_TRACKER_CLASS) == 0)
+		collect_channels (engine, subject);
 
 	g_free (query);
 	g_object_unref (cursor);
@@ -540,27 +552,132 @@ remove_channel_data (GtkTreeModel *model, GtkTreeIter *iter)
 	g_object_unref (items);
 }
 
+/*
+	Warning: this function scans the whole model to find an item accordly
+	only to his subject. Handle with care!
+*/
+static gboolean
+discover_item (ReaderEngine *engine,
+               const gchar *subject,
+               GtkTreeModel **target_model,
+               GtkTreeIter *target_iter)
+{
+	gboolean found;
+	gchar *test_id;
+	GtkTreeIter iter;
+	GtkTreeIter subiter;
+	GtkTreeIter parent;
+	GtkTreeStore *items;
+	GtkTreeModel *data;
+	GtkTreeModel *imodel;
+	ReaderEnginePrivate *priv;
+
+	priv = reader_engine_get_instance_private (engine);
+	data = GTK_TREE_MODEL (priv->data);
+
+	if (gtk_tree_model_get_iter_first (data, &iter) == FALSE)
+		return FALSE;
+
+	found = FALSE;
+
+	do {
+		gtk_tree_model_get (data, &iter, EXTRA_COLUMN_FEEDS_MODEL, &items, -1);
+		imodel = GTK_TREE_MODEL (items);
+
+		if (gtk_tree_model_get_iter_first (imodel, &parent) == FALSE)
+			continue;
+
+		do {
+			if (gtk_tree_model_iter_children (imodel, &subiter, &parent) == FALSE)
+				continue;
+
+			do {
+				gtk_tree_model_get (imodel, &subiter, ITEM_COLUMN_ID, &test_id, -1);
+
+				if (strcmp (test_id, subject) == 0) {
+					found = TRUE;
+					*target_model = imodel;
+					*target_iter = subiter;
+				}
+
+				g_free (test_id);
+
+			} while (found == FALSE && gtk_tree_model_iter_next (imodel, &subiter));
+
+		} while (found == FALSE && gtk_tree_model_iter_next (imodel, &subiter));
+
+	} while (found == FALSE && gtk_tree_model_iter_next (data, &iter));
+
+	return found;
+}
+
 static void
-handle_channel_deletes (ReaderEngine *engine,
-                        gint sub)
+handle_feed_deletes (ReaderEngine *engine,
+                     gint sub,
+                     gint obj)
 {
 	gchar *query;
 	const gchar *subject;
+	const gchar *object;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	GDateTime *date;
+	TrackerSparqlCursor *cursor;
+	ReaderEnginePrivate *priv;
+
+	priv = reader_engine_get_instance_private (engine);
+
+	query = g_strdup_printf ("SELECT tracker:uri(%d) tracker:uri(%d) {}", sub, obj);
+	cursor = tracker_sparql_connection_query (priv->tracker, query, NULL, NULL);
+	tracker_sparql_cursor_next (cursor, NULL, NULL);
+	subject = tracker_sparql_cursor_get_string (cursor, 0, NULL);
+	object = tracker_sparql_cursor_get_string (cursor, 1, NULL);
+
+	if (object != NULL && strcmp (object, FEED_MESSAGE_TRACKER_CLASS) == 0) {
+		if (discover_item (engine, subject, &model, &iter)) {
+			/*
+				TODO	If the removed item is the last one for
+					his date, remove and free also the
+					parent row containing the date header
+			*/
+
+			gtk_tree_model_get (model, &iter, ITEM_COLUMN_TIME, &date, -1);
+			g_date_time_unref (date);
+
+			gtk_tree_store_remove (GTK_TREE_STORE (model), &iter);
+		}
+	}
+
+	g_free (query);
+	g_object_unref (cursor);
+}
+
+static void
+handle_channel_deletes (ReaderEngine *engine,
+                        gint sub,
+                        gint obj)
+{
+	gchar *query;
+	const gchar *subject;
+	const gchar *object;
 	GtkTreeIter *iter;
 	TrackerSparqlCursor *cursor;
 	ReaderEnginePrivate *priv;
 
 	priv = reader_engine_get_instance_private (engine);
 
-	query = g_strdup_printf ("SELECT tracker:uri(%d) {}", sub);
+	query = g_strdup_printf ("SELECT tracker:uri(%d) tracker:uri(%d) {}", sub, obj);
 	cursor = tracker_sparql_connection_query (priv->tracker, query, NULL, NULL);
 	tracker_sparql_cursor_next (cursor, NULL, NULL);
 	subject = tracker_sparql_cursor_get_string (cursor, 0, NULL);
+	object = tracker_sparql_cursor_get_string (cursor, 1, NULL);
 
-	if (find_in_model (GTK_TREE_MODEL (priv->data), GD_MAIN_COLUMN_ID, subject, &iter)) {
-		remove_channel_data (GTK_TREE_MODEL (priv->data), iter);
-		gtk_list_store_remove (priv->data, iter);
-		gtk_tree_iter_free (iter);
+	if (object != NULL && strcmp (object, FEED_CHANNEL_TRACKER_CLASS) == 0) {
+		if (find_in_model (GTK_TREE_MODEL (priv->data), GD_MAIN_COLUMN_ID, subject, &iter)) {
+			remove_channel_data (GTK_TREE_MODEL (priv->data), iter);
+			gtk_list_store_remove (priv->data, iter);
+			gtk_tree_iter_free (iter);
+		}
 	}
 
 	g_free (query);
@@ -582,17 +699,11 @@ on_message_update (GDBusConnection *connection,
 
 	g_variant_get (parameters, "(&sa(iiii)a(iiii))", &class_name, &iter1, &iter2);
 
-	/*
-
-	TODO
-
 	while (g_variant_iter_loop (iter1, "(iiii)", &graph, &subject, &predicate, &object))
-		handle_feed_deletes (engine, subject);
-
-	*/
+		handle_feed_deletes (engine, subject, object);
 
 	while (g_variant_iter_loop (iter2, "(iiii)", &graph, &subject, &predicate, &object))
-		handle_feed_inserts (engine, subject);
+		handle_feed_inserts (engine, subject, object);
 
 	g_variant_iter_free (iter1);
 	g_variant_iter_free (iter2);
@@ -614,10 +725,10 @@ on_channel_update (GDBusConnection *connection,
 	g_variant_get (parameters, "(&sa(iiii)a(iiii))", &class_name, &iter1, &iter2);
 
 	while (g_variant_iter_loop (iter1, "(iiii)", &graph, &subject, &predicate, &object))
-		handle_channel_deletes (engine, subject);
+		handle_channel_deletes (engine, subject, object);
 
 	while (g_variant_iter_loop (iter2, "(iiii)", &graph, &subject, &predicate, &object))
-		handle_channel_inserts (engine, subject);
+		handle_channel_inserts (engine, subject, object);
 
 	g_variant_iter_free (iter1);
 	g_variant_iter_free (iter2);
@@ -666,7 +777,7 @@ reader_engine_init (ReaderEngine *engine)
 	                                    TRACKER_DBUS_INTERFACE_RESOURCES,
 	                                    "GraphUpdated",
 	                                    TRACKER_DBUS_OBJECT_RESOURCES,
-	                                    "http://www.tracker-project.org/temp/mfo#FeedChannel",
+	                                    FEED_CHANNEL_TRACKER_CLASS,
 	                                    G_DBUS_SIGNAL_FLAGS_NONE,
 	                                    (GDBusSignalCallback) on_channel_update, engine, NULL);
 
@@ -675,7 +786,7 @@ reader_engine_init (ReaderEngine *engine)
 	                                    TRACKER_DBUS_INTERFACE_RESOURCES,
 	                                    "GraphUpdated",
 	                                    TRACKER_DBUS_OBJECT_RESOURCES,
-	                                    "http://www.tracker-project.org/temp/mfo#FeedMessage",
+	                                    FEED_MESSAGE_TRACKER_CLASS,
 	                                    G_DBUS_SIGNAL_FLAGS_NONE,
 	                                    (GDBusSignalCallback) on_message_update, engine, NULL);
 
