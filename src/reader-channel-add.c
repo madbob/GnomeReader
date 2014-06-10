@@ -40,6 +40,7 @@ struct _ReaderChannelAddPrivate
 	GtkTreeView *entrieslist;
 	GtkButton *entriessave;
 	gint entriescount;
+	gint current_mode;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE(ReaderChannelAdd, reader_channel_add, GTK_TYPE_BOX);
@@ -74,11 +75,18 @@ on_channel_fetched (GObject *source,
 			g_object_unref (channel);
 		}
 		else {
-			gtk_list_store_append (model, &iter);
-			gtk_list_store_set (model, &iter,
-				            0, TRUE,
-				            1, grss_feed_channel_get_title (channel),
-				            2, channel, -1);
+			if (priv->current_mode == 0) {
+				reader_engine_push_channel (reader_app_window_get_engine (mainWin), channel);
+				reader_app_window_change_state (mainWin, READER_STATE_FRONT);
+				return;
+			}
+			else {
+				gtk_list_store_append (model, &iter);
+				gtk_list_store_set (model, &iter,
+						    0, TRUE,
+						    1, grss_feed_channel_get_title (channel),
+						    2, channel, -1);
+			}
 		}
 	}
 
@@ -153,6 +161,7 @@ on_new_by_url_btn_clicked (GtkButton *button,
 	ReaderChannelAddPrivate *priv;
 
 	priv = reader_channel_add_get_instance_private (add);
+	priv->current_mode = 0;
 	gtk_entry_set_text (priv->urlentry, "");
 	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "byurl");
 }
@@ -172,6 +181,7 @@ on_new_by_file_btn_clicked (GtkButton *button,
 	GError *error = NULL;
 
 	priv = reader_channel_add_get_instance_private (add);
+	priv->current_mode = 1;
 
 	dialog = gtk_file_chooser_dialog_new (_("Open File"),
 	                                      NULL,
