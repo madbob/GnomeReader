@@ -44,11 +44,6 @@ struct _ReaderEnginePrivate
 	GtkListStore *data;
 };
 
-typedef struct {
-	gchar *id;
-	gboolean read;
-} ItemStatusUpdate;
-
 G_DEFINE_TYPE_WITH_PRIVATE(ReaderEngine, reader_engine, G_TYPE_OBJECT);
 
 static void
@@ -67,52 +62,32 @@ verify_tracker_update (GObject *source,
 }
 
 static void
-set_new_read_status (GObject *source,
-                     GAsyncResult *res,
-                     ItemStatusUpdate *update)
-{
-	gchar *query;
-	GError *error = NULL;
-
-	tracker_sparql_connection_query_finish (TRACKER_SPARQL_CONNECTION (source), res, &error);
-
-	if (error != NULL) {
-		g_warning ("Unable to update status of item in Tracker: %s", error->message);
-		g_error_free (error);
-	}
-	else {
-		query = g_strdup_printf ("INSERT {<%s> nmo:isRead %s}", update->id, update->read ? "true" : "false");
-		tracker_sparql_connection_update_async (TRACKER_SPARQL_CONNECTION (source), query, 0, NULL,
-		                                        (GAsyncReadyCallback) verify_tracker_update, NULL);
-		g_free (query);
-	}
-
-	g_free (update->id);
-	g_free (update);
-}
-
-static void
 model_item_changed (GtkTreeModel *tree_model,
                     GtkTreePath *path,
                     GtkTreeIter *iter,
                     ReaderEngine *engine)
 {
 	int read;
+	gboolean r;
+	gchar *id;
 	gchar *query;
 	ReaderEnginePrivate *priv;
-	ItemStatusUpdate *update;
 
 	if (gtk_tree_path_get_depth (path) == 1)
 		return;
 
-	update = g_new0 (ItemStatusUpdate, 1);
-	gtk_tree_model_get (tree_model, iter, ITEM_COLUMN_ID, &(update->id), ITEM_COLUMN_READ, &read, -1);
-	update->read = (read == READ_FONT_WEIGHT ? TRUE : FALSE);
+	gtk_tree_model_get (tree_model, iter, ITEM_COLUMN_ID, &id, ITEM_COLUMN_READ, &read, -1);
+	r = (read == READ_FONT_WEIGHT ? TRUE : FALSE);
 
 	priv = reader_engine_get_instance_private (engine);
-	query = g_strdup_printf ("DELETE {<%s> nmo:isRead %s}", update->id, update->read ? "false" : "true");
+	query = g_strdup_printf ("DELETE {<%s> nmo:isRead %s} "
+	                         "WHERE {<%s> nmo:isRead %s} "
+	                         "INSERT {<%s> nmo:isRead %s}",
+	                         id, r ? "false" : "true", id, r ? "false" : "true", id, r ? "true" : "false");
+
 	tracker_sparql_connection_update_async (priv->tracker, query, 0, NULL,
-	                                        (GAsyncReadyCallback) set_new_read_status, update);
+	                                        (GAsyncReadyCallback) verify_tracker_update, NULL);
+	g_free (id);
 	g_free (query);
 }
 
