@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 3.8 -->
-  <template class="ReaderTopbar" parent="GtkBox">
+  <template class="ReaderTopbar" parent="GtkStack">
     <property name="visible">True</property>
 
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
         <property name="orientation">horizontal</property>
-        <property name="spacing">0</property>
 
         <child>
           <object class="GtkHeaderBar" id="front_toolbar">
@@ -55,7 +54,6 @@
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="padding">0</property>
           </packing>
         </child>
       </object>
@@ -69,7 +67,6 @@
       <object class="GtkBox">
         <property name="visible">True</property>
         <property name="orientation">horizontal</property>
-        <property name="spacing">0</property>
 
         <child>
           <object class="GtkHeaderBar" id="add_toolbar">
@@ -100,7 +97,6 @@
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="padding">0</property>
           </packing>
         </child>
       </object>
@@ -114,7 +110,6 @@
       <object class="GtkBox">
         <property name="visible">True</property>
         <property name="orientation">horizontal</property>
-        <property name="spacing">0</property>
 
         <child>
           <object class="GtkHeaderBar" id="items_toolbar">
@@ -137,7 +132,6 @@
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="padding">0</property>
           </packing>
         </child>
       </object>
@@ -151,7 +145,6 @@
       <object class="GtkBox">
         <property name="visible">True</property>
         <property name="orientation">horizontal</property>
-        <property name="spacing">0</property>
 
         <child>
           <object class="GtkHeaderBar" id="edit_toolbar">
@@ -198,7 +191,6 @@
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="padding">0</property>
           </packing>
         </child>
       </object>

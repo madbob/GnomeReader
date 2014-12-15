@@ -68,8 +68,8 @@ MAINTAINER_COMPILER_FLAGS=${MAINTAINER_COMPILER_FLAGS#*  }
 AC_SUBST(MAINTAINER_COMPILER_FLAGS)
 
 PKG_CHECK_MODULES(READER,
-        gtk+-3.0 >= 3.11.6
-        tracker-sparql-0.16 >= 0.16.2
+        gtk+-3.0 >= 3.14.5
+        tracker-sparql-1.0 >= 1.2.4
         webkit2gtk-3.0 >= 2.2.6
         libgrss-0.5 >= 0.5.0
 )
